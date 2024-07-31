@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:app/api/service_db_beverage.dart';
 
 class BeverageCard extends StatefulWidget {
   final String selectedBeverage;
@@ -17,6 +19,8 @@ class BeverageCard extends StatefulWidget {
 
 class _BeverageCardState extends State<BeverageCard> {
   int beverageColor = 0xff92b6f0;
+  var cardColors = {'Monster OG': 0xff6acd0c, 'Fanta': 0xffff5f17};
+  
 
   @override
   Widget build(BuildContext context) {
@@ -112,4 +116,3 @@ class _BeverageCardState extends State<BeverageCard> {
   }
 }
 
-var cardColors = {'Monster OG': 0xff6acd0c, 'Fanta': 0xffff5f17};

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:app/api/logo_api.dart';
 import 'package:app/widgets/card_widget.dart';
+import 'package:app/widgets/drawer_widget.dart';
 import 'package:app/widgets/logo_chooser_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -44,10 +45,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Beverage Manager',
+      debugShowCheckedModeBanner: false,
+      title: 'TrackVerse',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white,
       ),
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
@@ -137,8 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _showImageSelectionModal();
       
     }
-    _controller.text = '';
-    _controllerQuantity.text = '';
   }
 
   void _showImageSelectionModal() {
@@ -150,7 +151,8 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'Select Logo',
           imageUrls: Provider.of<Logo>(context, listen: false).imageUrls,
           onImageSelected: (selectedImageUrl) { 
-            Provider.of<ServiceDB>(context, listen: false).addBeverage(type, double.parse(_controllerQuantity.text), selectedImageUrl);
+            print(_controllerQuantity.text);
+            Provider.of<ServiceDB>(context, listen: false).addBeverage(type, num.parse(_controllerQuantity.text), selectedImageUrl);
             _controller.text = '';
             _controllerQuantity.text = '';
             setState(() {
@@ -167,12 +169,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Beverage Manager'),
+        title: Text('TrackVerse', style: TextStyle(color: Colors.white),),
+        backgroundColor: Colors.green,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20))
+        ),
+        
       ),
+      endDrawer: DrawerWidget(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
+      
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
