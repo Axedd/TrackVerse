@@ -22,13 +22,20 @@ class _DrawerWidgetState extends State<DrawerWidget> {
           ListTile(
             title: const Text("Home"),
             onTap: () => {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen())),
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (context) =>
+                        HomeScreen()), // Replace with your new page
+                (Route<dynamic> route) =>
+                    false, // This condition removes all previous routes
+              ),
             },
           ),
           ListTile(
             title: const Text("Settings"),
             onTap: () => {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()))
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()))
             },
           ),
         ],
