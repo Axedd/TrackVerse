@@ -256,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 selectedBeverage: selectedBeverage,
                 selectedQuantity: selectedQuantity,
                 imageUrl: image_url,
+                isChangeAble: false
               ),
             ],
           ),
