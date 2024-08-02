@@ -2,6 +2,7 @@ import 'package:app/api/service_db_beverage.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/card_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class BeverageSettingPage extends StatefulWidget {
   const BeverageSettingPage({super.key});
@@ -19,6 +20,32 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
     super.initState();
     // Fetch the data from the provider
     beverageList = Provider.of<ServiceDB>(context, listen: false).dataList;
+  }
+
+  int? getBeverageColor(String type) {
+  var serviceDB = Provider.of<ServiceDB>(context, listen: false);
+  var dataList = serviceDB.dataList;
+
+  for (var element in dataList) {
+    if (element['type'] == type) {
+      if (element['color'] == null) {
+        return null;
+      } else {
+        return int.parse(element['color']);
+      }
+    }
+  }
+
+  return null;
+}
+  
+
+  void updateBeverageNow(String type, num quantity, Color beverageColor)  {
+    var serviceDB = Provider.of<ServiceDB>(context, listen: false);
+    serviceDB.updateBeverage(type, quantity, beverageColor);
+    setState(() {
+      beverageList = Provider.of<ServiceDB>(context, listen: false).dataList;
+    });
   }
 
   @override
@@ -76,57 +103,113 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
                     selectedQuantity: beverage['quantity'],
                     imageUrl: beverage['image_url'] ?? '',
                     isChangeAble: true,
+                    beverageColor: getBeverageColor(beverage['type']),
                   ),
-                  onTap: () => {
+                  onTap: () {
+                    Color currentColor = Color(0xff92b6f0); // Initial color
+                    bool isEditingDetails = true; // Toggle between edit and color picker
+
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text("Settings For: ${beverage['type']}"),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextFormField(
-                                initialValue: beverage['type'],
-                                decoration: InputDecoration(
-                                  labelText: 'Edit Beverage Type',
-                                  border: OutlineInputBorder(),
+                        return StatefulBuilder(
+                          builder: (BuildContext context, StateSetter setState) {
+                            return AlertDialog(
+                              title: Text(
+                                "Settings For: ${beverage['type']}",
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              content: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              isEditingDetails = true;
+                                            });
+                                          },
+                                          child: Text("Edit Details"),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              isEditingDetails = false;
+                                            });
+                                          },
+                                          child: Text("Pick Color"),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 16),
+                                    if (isEditingDetails)
+                                      Column(
+                                        children: [
+                                          TextFormField(
+                                            initialValue: beverage['type'],
+                                            decoration: InputDecoration(
+                                              labelText: 'Edit Beverage Type',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                          SizedBox(height: 16),
+                                          TextFormField(
+                                            initialValue: beverage['quantity'].toString(),
+                                            decoration: InputDecoration(
+                                              labelText: 'Edit Beverage Quantity',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      Column(
+                                        children: [
+                                          MiniBeverageCard(
+                                            selectedBeverage: beverage['type'],
+                                            selectedQuantity: beverage['quantity'],
+                                            imageUrl: beverage['image_url'],
+                                            beverageColor: currentColor,
+                                          ),
+                                          SizedBox(height: 16),
+                                          Text("Select Card Color"),
+                                          ColorPicker(
+                                            pickerColor: currentColor,
+                                            enableAlpha: false,
+                                            onColorChanged: (color) {
+                                              setState(() {
+                                                currentColor = color;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 16),
-                              TextFormField(
-                                initialValue: beverage['quantity'].toString(),
-                                decoration: InputDecoration(
-                                  labelText: 'Edit Beverage Quantity',
-                                  border: OutlineInputBorder(),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text("Cancel"),
                                 ),
-                              ),
-                              SizedBox(height: 16),
-                              MiniBeverageCard(
-                                selectedBeverage: beverage['type'],
-                                selectedQuantity: beverage['quantity'],
-                                imageUrl: beverage['image_url'],
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text("Cancel"),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // Add save functionality here
-                                Navigator.of(context).pop();
-                              },
-                              child: Text("Save"),
-                            ),
-                          ],
+                                TextButton(
+                                  onPressed: () {
+                                    updateBeverageNow(beverage['type'], beverage['quantity'], currentColor);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text("Save"),
+                                ),
+                              ],
+                            );
+                          },
                         );
                       },
-                    )
+                    );
                   },
                 );
               },
@@ -142,28 +225,21 @@ class MiniBeverageCard extends StatelessWidget {
   final String selectedBeverage;
   final num? selectedQuantity;
   final String? imageUrl;
+  final Color beverageColor;
 
   const MiniBeverageCard({
     required this.selectedBeverage,
     required this.selectedQuantity,
     required this.imageUrl,
+    required this.beverageColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    int beverageColor = 0xff92b6f0;
-    var cardColors = {'Monster OG': 0xff6acd0c, 'Fanta': 0xffff5f17};
-
-    if (cardColors[selectedBeverage] != null) {
-      beverageColor = cardColors[selectedBeverage]!;
-    } else {
-      beverageColor = 0xff92b6f0;
-    }
-
     return Container(
       width: double.infinity,
       child: Card(
-        color: Color(beverageColor),
+        color: beverageColor,
         elevation: 4,
         child: Padding(
           padding: const EdgeInsets.all(8.0),

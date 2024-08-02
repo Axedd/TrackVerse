@@ -1,5 +1,6 @@
 
 import 'package:app/api/logo_api.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -55,6 +56,23 @@ class ServiceDB extends ChangeNotifier {
       }
       await supabase.from('beverage').update({'quantity': quantity}).eq('type', type);
       await insertDateData(type, quantity);
+      notifyListeners();
+    } catch (error) {
+      print('Error updating data: $error');
+    }
+  }
+
+  Future<void> updateBeverage(String type, num quantity, Color beverageColor) async {
+    try {
+      for (var item in _dataList) {
+        if (item['type'] == type) {
+          item['quantity'] = quantity;
+          item['color'] = beverageColor.value.toString();
+          notifyListeners();
+          break;
+        }
+      }
+      await supabase.from('beverage').update({'quantity': quantity, 'color': beverageColor.value.toString()}).eq('type', type);
       notifyListeners();
     } catch (error) {
       print('Error updating data: $error');

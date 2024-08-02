@@ -76,6 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
       GlobalKey<BeverageDropdownState>();
   int choice = 0;
   String? image_url = "";
+  late List<Map<dynamic, dynamic>> beverageList;
+
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
     selectedQuantity =
         Provider.of<ServiceDB>(context, listen: false).beverageAmount!;
     image_url = Provider.of<ServiceDB>(context, listen: false).initialImageUrl;
+    beverageList = Provider.of<ServiceDB>(context, listen: false).dataList;
   }
 
   @override
@@ -96,6 +99,23 @@ class _HomeScreenState extends State<HomeScreen> {
     _controllerQuantity.dispose();
     super.dispose();
   }
+
+  int? getBeverageColor(String type) {
+  var serviceDB = Provider.of<ServiceDB>(context, listen: false);
+  var dataList = serviceDB.dataList;
+
+  for (var element in dataList) {
+    if (element['type'] == type) {
+      if (element['color'] == null) {
+        return null;
+      } else {
+        return int.parse(element['color']);
+      }
+    }
+  }
+
+  return null;
+}
 
   void updateLogo(String type) {
     var serviceDB = Provider.of<ServiceDB>(context, listen: false);
@@ -252,11 +272,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               SizedBox(height: 20),
+              
               BeverageCard(
                 selectedBeverage: selectedBeverage,
                 selectedQuantity: selectedQuantity,
                 imageUrl: image_url,
-                isChangeAble: false
+                isChangeAble: false,
+                beverageColor: getBeverageColor(selectedBeverage),
               ),
             ],
           ),

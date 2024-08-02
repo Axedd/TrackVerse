@@ -5,13 +5,14 @@ class BeverageCard extends StatefulWidget {
   final num? selectedQuantity;
   final String? imageUrl;
   final bool isChangeAble;
+  final int? beverageColor;
 
   const BeverageCard(
       {super.key,
       required this.selectedBeverage,
       required this.selectedQuantity,
       required this.imageUrl,
-      required this.isChangeAble});
+      required this.isChangeAble, required this.beverageColor});
 
   @override
   State<BeverageCard> createState() => _BeverageCardState();
@@ -24,8 +25,8 @@ class _BeverageCardState extends State<BeverageCard> {
   @override
   Widget build(BuildContext context) {
     // Check for special color for beverage if null then use default color
-    if (cardColors[widget.selectedBeverage] != null) {
-      beverageColor = cardColors[widget.selectedBeverage]!;
+    if (widget.beverageColor != null) {
+      beverageColor = widget.beverageColor!;
     } else {
       beverageColor = 0xff92b6f0;
     }
