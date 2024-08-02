@@ -14,6 +14,7 @@ class BeverageSettingPage extends StatefulWidget {
 class _BeverageSettingPageState extends State<BeverageSettingPage> {
   late List<Map<dynamic, dynamic>> beverageList;
   String searchQuery = '';
+  Color currentColor = Color(0xff92b6f0); 
 
   @override
   void initState() {
@@ -42,7 +43,7 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
 
   void updateBeverageNow(String type, num quantity, Color beverageColor)  {
     var serviceDB = Provider.of<ServiceDB>(context, listen: false);
-    serviceDB.updateBeverage(type, quantity, beverageColor);
+    serviceDB.updateDataValues(type, quantity, beverageColor: beverageColor);
     setState(() {
       beverageList = Provider.of<ServiceDB>(context, listen: false).dataList;
     });
@@ -55,6 +56,8 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
       final type = beverage['type'].toLowerCase();
       return type.contains(searchQuery.toLowerCase());
     }).toList();
+    
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -106,7 +109,10 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
                     beverageColor: getBeverageColor(beverage['type']),
                   ),
                   onTap: () {
-                    Color currentColor = Color(0xff92b6f0); // Initial color
+                    if (getBeverageColor(beverage['type']) != null) {
+                      currentColor = Color(getBeverageColor(beverage['type'])!);
+                    } 
+                     // Initial color
                     bool isEditingDetails = true; // Toggle between edit and color picker
 
                     showDialog(

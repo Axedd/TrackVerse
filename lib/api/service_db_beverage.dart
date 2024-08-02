@@ -1,4 +1,3 @@
-
 import 'package:app/api/logo_api.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:app/api/utils.dart';
-
-
 
 // Initialize Supabase client
 final client = SupabaseClient(
@@ -45,34 +42,32 @@ class ServiceDB extends ChangeNotifier {
   }
 
   // Update data values
-  Future<void> updateDataValues(String type, num quantity) async {
+  Future<void> updateDataValues(String type, num quantity,
+      {Color? beverageColor = null}) async {
     try {
       for (var item in _dataList) {
         if (item['type'] == type) {
           item['quantity'] = quantity;
+          if (beverageColor != null) {
+            print("HELLO  $beverageColor"); 
+            item['color'] = beverageColor.value.toString();
+          }
           notifyListeners();
           break;
         }
       }
-      await supabase.from('beverage').update({'quantity': quantity}).eq('type', type);
-      await insertDateData(type, quantity);
-      notifyListeners();
-    } catch (error) {
-      print('Error updating data: $error');
-    }
-  }
-
-  Future<void> updateBeverage(String type, num quantity, Color beverageColor) async {
-    try {
-      for (var item in _dataList) {
-        if (item['type'] == type) {
-          item['quantity'] = quantity;
-          item['color'] = beverageColor.value.toString();
-          notifyListeners();
-          break;
-        }
+      print(beverageColor);
+      if (beverageColor != null) {
+        await supabase.from('beverage').update({
+          'quantity': quantity,
+          'color': beverageColor.value.toString()
+        }).eq('type', type);
+      } else {
+        await supabase
+            .from('beverage')
+            .update({'quantity': quantity}).eq('type', type);
+        await insertDateData(type, quantity);
       }
-      await supabase.from('beverage').update({'quantity': quantity, 'color': beverageColor.value.toString()}).eq('type', type);
       notifyListeners();
     } catch (error) {
       print('Error updating data: $error');
@@ -83,9 +78,11 @@ class ServiceDB extends ChangeNotifier {
   Future<void> addBeverage(String type, num quantity, String img_url) async {
     try {
       _dataList.add({'type': type, 'quantity': quantity, 'image_url': img_url});
-      await supabase.from('beverage').insert({'type': type, 'quantity': quantity, 'image_url': img_url});
+      await supabase
+          .from('beverage')
+          .insert({'type': type, 'quantity': quantity, 'image_url': img_url});
       await insertDateData(type, quantity);
-      
+
       notifyListeners();
     } catch (error) {
       print('Error adding beverage: $error');

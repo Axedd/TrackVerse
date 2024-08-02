@@ -34,8 +34,12 @@ class _DrawerWidgetState extends State<DrawerWidget> {
           ListTile(
             title: const Text("Settings"),
             onTap: () => {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()))
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsPage(),
+                ),
+              )
             },
           ),
         ],
