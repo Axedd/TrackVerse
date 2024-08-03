@@ -45,6 +45,22 @@ class ServiceDB extends ChangeNotifier {
   Future<void> updateDataValues(String type, num quantity,
       {Color? beverageColor = null}) async {
     try {
+      print(beverageColor);
+      if (beverageColor != null) {
+        print("UPDATE VALUES: ${quantity}");
+        await supabase.from('beverage').update({
+          'type': type,
+          'quantity': quantity,
+          'color': beverageColor.value.toString()
+        }).eq('type', type);
+      } else {
+        print("UPDATE VALUES");
+        await supabase
+            .from('beverage')
+            .update({'type': type, 'quantity': quantity}).eq('type', type);
+        await insertDateData(type, quantity);
+      }
+
       for (var item in _dataList) {
         if (item['type'] == type) {
           item['quantity'] = quantity;
@@ -55,18 +71,6 @@ class ServiceDB extends ChangeNotifier {
           notifyListeners();
           break;
         }
-      }
-      print(beverageColor);
-      if (beverageColor != null) {
-        await supabase.from('beverage').update({
-          'quantity': quantity,
-          'color': beverageColor.value.toString()
-        }).eq('type', type);
-      } else {
-        await supabase
-            .from('beverage')
-            .update({'quantity': quantity}).eq('type', type);
-        await insertDateData(type, quantity);
       }
       notifyListeners();
     } catch (error) {

@@ -14,50 +14,42 @@ class BeverageSettingPage extends StatefulWidget {
 class _BeverageSettingPageState extends State<BeverageSettingPage> {
   late List<Map<dynamic, dynamic>> beverageList;
   String searchQuery = '';
-  Color currentColor = Color(0xff92b6f0); 
+  Color currentColor = Color(0xff92b6f0);
 
   @override
   void initState() {
     super.initState();
-    // Fetch the data from the provider
-    beverageList = Provider.of<ServiceDB>(context, listen: false).dataList;
+
   }
 
   int? getBeverageColor(String type) {
-  var serviceDB = Provider.of<ServiceDB>(context, listen: false);
-  var dataList = serviceDB.dataList;
+    var serviceDB = context.read<ServiceDB>();
+    var dataList = serviceDB.dataList;
 
-  for (var element in dataList) {
-    if (element['type'] == type) {
-      if (element['color'] == null) {
-        return null;
-      } else {
-        return int.parse(element['color']);
+    for (var element in dataList) {
+      if (element['type'] == type) {
+        return element['color'] != null ? int.parse(element['color']) : null;
       }
     }
+    return null;
   }
 
-  return null;
-}
-  
-
-  void updateBeverageNow(String type, num quantity, Color beverageColor)  {
-    var serviceDB = Provider.of<ServiceDB>(context, listen: false);
+  void updateBeverageNow(String type, num quantity, Color beverageColor) {
+    var serviceDB = context.read<ServiceDB>();
     serviceDB.updateDataValues(type, quantity, beverageColor: beverageColor);
     setState(() {
-      beverageList = Provider.of<ServiceDB>(context, listen: false).dataList;
+      beverageList = serviceDB.dataList;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final beverageList = context.watch<ServiceDB>().dataList;
     // Filter the beverage list based on the search query
     final filteredBeverageList = beverageList.where((beverage) {
       final type = beverage['type'].toLowerCase();
       return type.contains(searchQuery.toLowerCase());
     }).toList();
-    
-    
 
     return Scaffold(
       appBar: AppBar(
@@ -111,108 +103,15 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
                   onTap: () {
                     if (getBeverageColor(beverage['type']) != null) {
                       currentColor = Color(getBeverageColor(beverage['type'])!);
-                    } 
-                     // Initial color
-                    bool isEditingDetails = true; // Toggle between edit and color picker
-
+                    }
+                    // Show settings dialog
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return StatefulBuilder(
-                          builder: (BuildContext context, StateSetter setState) {
-                            return AlertDialog(
-                              title: Text(
-                                "Settings For: ${beverage['type']}",
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              isEditingDetails = true;
-                                            });
-                                          },
-                                          child: Text("Edit Details"),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              isEditingDetails = false;
-                                            });
-                                          },
-                                          child: Text("Pick Color"),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 16),
-                                    if (isEditingDetails)
-                                      Column(
-                                        children: [
-                                          TextFormField(
-                                            initialValue: beverage['type'],
-                                            decoration: InputDecoration(
-                                              labelText: 'Edit Beverage Type',
-                                              border: OutlineInputBorder(),
-                                            ),
-                                          ),
-                                          SizedBox(height: 16),
-                                          TextFormField(
-                                            initialValue: beverage['quantity'].toString(),
-                                            decoration: InputDecoration(
-                                              labelText: 'Edit Beverage Quantity',
-                                              border: OutlineInputBorder(),
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    else
-                                      Column(
-                                        children: [
-                                          MiniBeverageCard(
-                                            selectedBeverage: beverage['type'],
-                                            selectedQuantity: beverage['quantity'],
-                                            imageUrl: beverage['image_url'],
-                                            beverageColor: currentColor,
-                                          ),
-                                          SizedBox(height: 16),
-                                          Text("Select Card Color"),
-                                          ColorPicker(
-                                            pickerColor: currentColor,
-                                            enableAlpha: false,
-                                            onColorChanged: (color) {
-                                              setState(() {
-                                                currentColor = color;
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text("Cancel"),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    updateBeverageNow(beverage['type'], beverage['quantity'], currentColor);
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text("Save"),
-                                ),
-                              ],
-                            );
-                          },
+                        return BeverageSettingsDialog(
+                          beverage: beverage,
+                          currentColor: currentColor,
+                          updateBeverage: updateBeverageNow,
                         );
                       },
                     );
@@ -223,6 +122,145 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class BeverageSettingsDialog extends StatefulWidget {
+  final Map<dynamic, dynamic> beverage;
+  final Color currentColor;
+  final Function(String, num, Color) updateBeverage;
+
+  const BeverageSettingsDialog({
+    required this.beverage,
+    required this.currentColor,
+    required this.updateBeverage,
+  });
+
+  @override
+  _BeverageSettingsDialogState createState() => _BeverageSettingsDialogState();
+}
+
+class _BeverageSettingsDialogState extends State<BeverageSettingsDialog> {
+  late Color currentColor;
+  bool isEditingDetails = true;
+  late TextEditingController _beverageTypeController;
+  late TextEditingController _beverageQuantityController;
+
+  @override
+  void initState() {
+    super.initState();
+    currentColor = widget.currentColor;
+    _beverageTypeController =
+        TextEditingController(text: widget.beverage['type']);
+    _beverageQuantityController =
+        TextEditingController(text: widget.beverage['quantity'].toString());
+  }
+
+  @override
+  void dispose() {
+    _beverageTypeController.dispose();
+    _beverageQuantityController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        "Settings For: ${widget.beverage['type']}",
+        style: TextStyle(fontSize: 12),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      isEditingDetails = true;
+                    });
+                  },
+                  child: Text("Edit Details"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      isEditingDetails = false;
+                    });
+                  },
+                  child: Text("Pick Color"),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            if (isEditingDetails)
+              Column(
+                children: [
+                  TextFormField(
+                    controller: _beverageTypeController,
+                    decoration: InputDecoration(
+                      labelText: 'Edit Beverage Type',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _beverageQuantityController,
+                    decoration: InputDecoration(
+                      labelText: 'Edit Beverage Quantity',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  MiniBeverageCard(
+                    selectedBeverage: widget.beverage['type'],
+                    selectedQuantity: widget.beverage['quantity'],
+                    imageUrl: widget.beverage['image_url'],
+                    beverageColor: currentColor,
+                  ),
+                  SizedBox(height: 16),
+                  Text("Select Card Color"),
+                  ColorPicker(
+                    pickerColor: currentColor,
+                    enableAlpha: false,
+                    onColorChanged: (color) {
+                      setState(() {
+                        currentColor = color;
+                      });
+                    },
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () {
+            widget.updateBeverage(
+              _beverageTypeController.text,
+              num.parse(_beverageQuantityController.text),
+              currentColor,
+            );
+            Navigator.of(context).pop();
+          },
+          child: Text("Save"),
+        ),
+      ],
     );
   }
 }
