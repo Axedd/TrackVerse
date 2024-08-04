@@ -41,41 +41,49 @@ class ServiceDB extends ChangeNotifier {
     }
   }
 
-  // Update data values
-  Future<void> updateDataValues(String type, num quantity,
-      {Color? beverageColor = null}) async {
+  Future<void> updateDataValues(String type, String initialType, num quantity,
+      {Color? beverageColor}) async {
+    print("Initial Type: $initialType");
+    print("New Type: $type");
+
     try {
-      print(beverageColor);
+      Map<String, dynamic> updateData = {
+        'type': type,
+        'quantity': quantity,
+      };
+
       if (beverageColor != null) {
-        print("UPDATE VALUES: ${quantity}");
-        await supabase.from('beverage').update({
-          'type': type,
-          'quantity': quantity,
-          'color': beverageColor.value.toString()
-        }).eq('type', type);
+        updateData['color'] = beverageColor.value.toString();
+        print("Updating with color: $updateData");
+
+        await supabase.from('beverage').update(updateData).eq('type', initialType);
       } else {
-        print("UPDATE VALUES");
-        await supabase
-            .from('beverage')
-            .update({'type': type, 'quantity': quantity}).eq('type', type);
-        await insertDateData(type, quantity);
+        print("Updating without color: $updateData");
+
+        await supabase.from('beverage').update(updateData).eq('type', initialType);
       }
 
-      for (var item in _dataList) {
-        if (item['type'] == type) {
-          item['quantity'] = quantity;
-          if (beverageColor != null) {
-            print("HELLO  $beverageColor"); 
-            item['color'] = beverageColor.value.toString();
-          }
-          notifyListeners();
-          break;
-        }
-      }
-      notifyListeners();
+      await _updateLocalData(initialType, type, quantity, beverageColor);
     } catch (error) {
       print('Error updating data: $error');
     }
+  }
+
+  Future<void> _updateLocalData(String initialType, String type, num quantity,
+      Color? beverageColor) async {
+    for (var item in _dataList) {
+      if (item['type'] == initialType) {
+        item['type'] = type;
+        item['quantity'] = quantity;
+        if (beverageColor != null) {
+          item['color'] = beverageColor.value.toString();
+        }
+        notifyListeners();
+        break;
+      }
+    }
+    await insertDateData(type, quantity);
+    notifyListeners();
   }
 
   // Add new beverage

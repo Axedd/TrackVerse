@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void updateBeverage(String type, num quantity) {
     var serviceDB = Provider.of<ServiceDB>(context, listen: false);
-    serviceDB.updateDataValues(type, quantity);
+    serviceDB.updateDataValues(type, type, quantity);
     updateLogo(type);
     setState(() {
       selectedBeverage = type;

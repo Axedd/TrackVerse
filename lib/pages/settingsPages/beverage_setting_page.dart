@@ -34,9 +34,9 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
     return null;
   }
 
-  void updateBeverageNow(String type, num quantity, Color beverageColor) {
+  void updateBeverageNow(String type, String initialType, num quantity, Color beverageColor) {
     var serviceDB = context.read<ServiceDB>();
-    serviceDB.updateDataValues(type, quantity, beverageColor: beverageColor);
+    serviceDB.updateDataValues(type, initialType, quantity, beverageColor: beverageColor);
     setState(() {
       beverageList = serviceDB.dataList;
     });
@@ -129,7 +129,7 @@ class _BeverageSettingPageState extends State<BeverageSettingPage> {
 class BeverageSettingsDialog extends StatefulWidget {
   final Map<dynamic, dynamic> beverage;
   final Color currentColor;
-  final Function(String, num, Color) updateBeverage;
+  final Function(String, String, num, Color) updateBeverage;
 
   const BeverageSettingsDialog({
     required this.beverage,
@@ -253,6 +253,7 @@ class _BeverageSettingsDialogState extends State<BeverageSettingsDialog> {
           onPressed: () {
             widget.updateBeverage(
               _beverageTypeController.text,
+              widget.beverage['type'],
               num.parse(_beverageQuantityController.text),
               currentColor,
             );
