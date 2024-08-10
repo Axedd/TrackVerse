@@ -22,9 +22,9 @@ class BeverageDropdownState extends State<BeverageDropdown> {
   @override
   void initState() {
     super.initState();
-    // Ensure that we start with the full list of beverages
     _searchController.addListener(_filterBeverages);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      beverages = Provider.of<ServiceDB>(context, listen: false).dataList;
       _updateFilteredBeverages();
     });
   }
@@ -39,6 +39,7 @@ class BeverageDropdownState extends State<BeverageDropdown> {
   void _updateFilteredBeverages() {
     setState(() {
       filteredBeverages = beverages ?? [];
+      dropdownValue = beverages!.isNotEmpty ? beverages![0]['type'].toString() : null;
     });
   }
 
@@ -55,43 +56,54 @@ class BeverageDropdownState extends State<BeverageDropdown> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Select Beverage'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Search',
-                    border: OutlineInputBorder(),
-                  ),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            // Update filtered list every time search text changes
+            _searchController.addListener(() {
+              setStateDialog(() {
+                _filterBeverages();
+              });
+            });
+
+            return AlertDialog(
+              title: Text('Select Beverage'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Expanded(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: filteredBeverages.map<Widget>((Map<dynamic, dynamic> beverage) {
+                          return ListTile(
+                            title: Text(beverage['type']),
+                            onTap: () {
+                              setState(() {
+                                dropdownValue = beverage['type'].toString();
+                                selectedQuantity = beverage['quantity'];
+                                Provider.of<ServiceDB>(context, listen: false).beverageChosen = dropdownValue;
+                                widget.onSelected(dropdownValue!, selectedQuantity!);
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 8),
-                Expanded(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: filteredBeverages.map<Widget>((Map<dynamic, dynamic> beverage) {
-                      return ListTile(
-                        title: Text(beverage['type']),
-                        onTap: () {
-                          setState(() {
-                            dropdownValue = beverage['type'].toString();
-                            selectedQuantity = beverage['quantity'];
-                            Provider.of<ServiceDB>(context, listen: false).beverageChosen = dropdownValue;
-                            widget.onSelected(dropdownValue!, selectedQuantity!);
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -99,12 +111,6 @@ class BeverageDropdownState extends State<BeverageDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    beverages = Provider.of<ServiceDB>(context, listen: false).dataList;
-    _updateFilteredBeverages(); // Ensure filtered beverages are updated
-
-    dropdownValue = dropdownValue ?? (beverages!.isNotEmpty ? beverages![0]['type'].toString() : null);
-    Provider.of<ServiceDB>(context, listen: false).beverageChosen = dropdownValue;
-
     return ElevatedButton(
       onPressed: _showSearchDialog,
       child: Text(dropdownValue ?? 'Select Beverage'),

@@ -86,7 +86,8 @@ class _BeverageCardState extends State<BeverageCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(children: [
+                          Row(
                           children: [
                             Text("Beverage:",
                                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -94,6 +95,7 @@ class _BeverageCardState extends State<BeverageCard> {
                             Text(widget.selectedBeverage),
                           ],
                         ),
+                        ],),
                         SizedBox(height: 10),
                         Row(
                           children: [
